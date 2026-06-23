@@ -1,0 +1,64 @@
+name: Build Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+
+      - name: Build portable installers
+        run: npm run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PrintGateway-Installers
+          path: |
+            dist/PrintGateway-Setup-*.zip
+            dist/PrintGateway-Setup-*.tar.gz
+            dist/PrintGateway-Setup-*.exe
+
+  build-windows-exe:
+    needs: build
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: PrintGateway-Installers
+          path: artifacts
+
+      - name: Install NSIS
+        run: choco install nsis -y
+
+      - name: Build Windows EXE installer
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          unzip -q "artifacts/PrintGateway-Setup-${VERSION}-win-x64.zip" -d dist/release/win-x64
+          makensis /DVERSION=$VERSION \
+            /DSOURCE_DIR="$(pwd)/dist/release/win-x64" \
+            /DOUT_FILE="$(pwd)/dist/PrintGateway-Setup-${VERSION}-win-x64.exe" \
+            installers/setup-portable.nsi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PrintGateway-Windows-EXE
+          path: dist/PrintGateway-Setup-*-win-x64.exe

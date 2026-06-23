@@ -1,0 +1,42 @@
+{
+  "name": "print-gateway",
+  "version": "1.0.0",
+  "description": "Local print relay for XPrinter thermal printers",
+  "main": "src/index.js",
+  "bin": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "scan": "node scripts/discover-printers.js",
+    "install:service": "node scripts/install.js",
+    "build": "node scripts/build-release.js"
+  },
+  "pkg": {
+    "assets": [
+      "public/**/*",
+      "config/**/*",
+      ".env.example",
+      "node_modules/iconv-lite/encodings/**/*"
+    ],
+    "scripts": [
+      "src/**/*.js"
+    ]
+  },
+  "dependencies": {
+    "dotenv": "^16.4.0",
+    "express": "^4.21.0",
+    "express-rate-limit": "^7.5.0",
+    "iconv-lite": "^0.6.3",
+    "pino": "^9.0.0",
+    "pino-pretty": "^11.0.0",
+    "uuid": "^10.0.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@yao-pkg/pkg": "^6.3.0",
+    "nodemon": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

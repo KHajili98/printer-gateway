@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Print Gateway — Konfiqurasiya</title>
+  <link rel="stylesheet" href="/setup/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <div class="logo-icon">🖨</div>
+        <div>
+          <h1>Print Gateway</h1>
+        </div>
+      </div>
+      <p class="subtitle">Restoran printer agenti — konfiqurasiya paneli</p>
+      <div class="status-bar" id="statusBar">
+        <span class="chip" id="chipService"><span class="dot"></span> Servis</span>
+        <span class="chip" id="chipMain"><span class="dot"></span> Əsas printer</span>
+        <span class="chip" id="chipMode"><span class="dot"></span> Rejim</span>
+      </div>
+    </header>
+
+    <!-- Server -->
+    <section class="card">
+      <h2>Server</h2>
+      <p class="card-desc">Gateway-in dinləyəcəyi port və API açarı</p>
+      <div class="grid">
+        <div class="field">
+          <label>Port</label>
+          <input type="number" id="port" value="3000" min="1024" max="65535">
+        </div>
+        <div class="field full">
+          <label>API Açarı (Django üçün)</label>
+          <div class="input-row">
+            <input type="text" id="apiKey" placeholder="Avtomatik yaradilacaq">
+            <button type="button" class="btn btn-secondary btn-sm" id="btnGenKey">Yeni açar</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Connection -->
+    <section class="card">
+      <h2>Əlaqə rejimi</h2>
+      <p class="card-desc">Remote server ilə necə əlaqə quracaq</p>
+      <div class="grid">
+        <div class="field">
+          <label>Rejim</label>
+          <select id="mode">
+            <option value="both">HTTP + WebSocket</option>
+            <option value="http">Yalniz HTTP</option>
+            <option value="websocket">Yalniz WebSocket</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Lokasiya ID</label>
+          <input type="text" id="locationId" value="1">
+        </div>
+        <div class="field full">
+          <label>Backend WebSocket URL</label>
+          <input type="url" id="backendWsUrl" placeholder="wss://api.example.com/ws/print-gateway/">
+        </div>
+        <div class="field full">
+          <label>Gateway Token</label>
+          <input type="text" id="gatewayToken" placeholder="Lokasiya tokeni">
+        </div>
+      </div>
+    </section>
+
+    <!-- Main printer -->
+    <section class="card">
+      <h2>Əsas printer (Kassa)</h2>
+      <p class="card-desc">Müştəri çekləri və admin çapları</p>
+      <div class="grid">
+        <div class="field">
+          <label>Ad</label>
+          <input type="text" id="mainName" value="Kassa printer">
+        </div>
+        <div class="field">
+          <label>IP ünvan</label>
+          <input type="text" id="mainIp" placeholder="192.168.1.50">
+        </div>
+        <div class="field">
+          <label>Port</label>
+          <input type="number" id="mainPort" value="9100">
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-secondary btn-sm" id="btnTestMain">Test çap</button>
+      </div>
+    </section>
+
+    <!-- Workers -->
+    <section class="card">
+      <h2>İşçi printerlər (Mətbəx / Bar)</h2>
+      <p class="card-desc">Hazırlanma çekləri üçün</p>
+      <div class="worker-list" id="workerList"></div>
+      <div class="actions">
+        <button type="button" class="btn btn-secondary btn-sm" id="btnAddWorker">+ Printer əlavə et</button>
+      </div>
+    </section>
+
+    <!-- Scan -->
+    <section class="card">
+      <h2>Şəbəkə scan</h2>
+      <p class="card-desc">LAN-da port 9100-də printer axtar</p>
+      <div class="grid">
+        <div class="field">
+          <label>Subnet</label>
+          <input type="text" id="scanSubnet" placeholder="192.168.1.">
+        </div>
+        <div class="field">
+          <label>Port</label>
+          <input type="number" id="scanPort" value="9100">
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-secondary btn-sm" id="btnScan">
+          <span id="scanLabel">Scan başlat</span>
+        </button>
+      </div>
+      <div class="scan-results hidden" id="scanResults"></div>
+    </section>
+
+    <!-- Status -->
+    <section class="card">
+      <h2>Printer statusu</h2>
+      <p class="card-desc">Canli əlaqə yoxlaması</p>
+      <div class="printer-status" id="printerStatus">
+        <p class="card-desc">Yüklənir...</p>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-secondary btn-sm" id="btnRefreshStatus">Yenilə</button>
+      </div>
+    </section>
+
+    <div class="footer-actions">
+      <button type="button" class="btn btn-primary" id="btnSave">Saxla</button>
+      <button type="button" class="btn btn-secondary" id="btnRestart">Servisi yenidən başlat</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="/setup/app.js"></script>
+</body>
+</html>
