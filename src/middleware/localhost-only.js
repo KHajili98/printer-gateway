@@ -1,5 +1,7 @@
 'use strict';
 
+const { logger } = require('./logger');
+
 function isLocalhost(req) {
   const ip = req.ip || req.socket?.remoteAddress || '';
   return (
@@ -12,6 +14,11 @@ function isLocalhost(req) {
 
 function localhostOnly(req, res, next) {
   if (!isLocalhost(req)) {
+    const ip = req.ip || req.socket?.remoteAddress || '';
+    logger.warn(
+      { ip, path: req.path, method: req.method },
+      `setup: kenar IP-den giris bloklandi (${ip}) — yalniz localhost`
+    );
     return res.status(403).json({
       success: false,
       message: 'Setup panel yalniz lokal kompüterden əlçatandir.',

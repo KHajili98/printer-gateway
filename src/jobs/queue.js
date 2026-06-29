@@ -42,7 +42,7 @@ class PrintQueue {
         lastError = err;
         logger.warn(
           { attempt, maxAttempts, ip: job.ip, error: err.code || err.message },
-          'print retry'
+          `cap retry: ${job.ip} — cəhd ${attempt}/${maxAttempts} ugursuz`
         );
 
         if (attempt < maxAttempts) {

@@ -17,11 +17,21 @@ class WsClient {
 
   start() {
     if (!config.backendWsUrl || !config.gatewayToken) {
-      logger.warn('WebSocket mode disabled: BACKEND_WS_URL or GATEWAY_TOKEN missing');
+      logger.warn(
+        {
+          hasWsUrl: Boolean(config.backendWsUrl),
+          hasToken: Boolean(config.gatewayToken),
+        },
+        'WebSocket deaktiv: BACKEND_WS_URL ve ya GATEWAY_TOKEN yoxdur'
+      );
       return;
     }
 
     this.shouldRun = true;
+    logger.info(
+      { url: config.backendWsUrl, locationId: config.locationId },
+      'WebSocket: backend-e qoşulma baslayir'
+    );
     this.connect();
   }
 
@@ -52,7 +62,7 @@ class WsClient {
     this.ws = new WebSocket(url);
 
     this.ws.on('open', () => {
-      logger.info('WebSocket connected');
+      logger.info({ locationId: config.locationId }, 'WebSocket: backend-e qoşuldu');
       this.reconnectDelayMs = 3000;
       this.startHeartbeat();
     });
@@ -61,8 +71,11 @@ class WsClient {
       this.handleMessage(data);
     });
 
-    this.ws.on('close', () => {
-      logger.warn('WebSocket disconnected');
+    this.ws.on('close', (code, reason) => {
+      logger.warn(
+        { code, reason: reason?.toString() || '', reconnectInMs: this.reconnectDelayMs },
+        'WebSocket: baglanti kesildi, yeniden qoşulma planlanir'
+      );
       this.stopHeartbeat();
       this.scheduleReconnect();
     });
@@ -77,6 +90,7 @@ class WsClient {
 
     clearTimeout(this.reconnectTimer);
     this.reconnectTimer = setTimeout(() => {
+      logger.info({ delayMs: this.reconnectDelayMs }, 'WebSocket: yeniden qoşulma cəhdi');
       this.connect();
       this.reconnectDelayMs = Math.min(this.reconnectDelayMs * 2, 60000);
     }, this.reconnectDelayMs);
@@ -117,6 +131,10 @@ class WsClient {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
 
     const printersStatus = await this.getPrintersStatus();
+    logger.debug(
+      { main: printersStatus.main, workerCount: printersStatus.workers?.length },
+      'WebSocket: heartbeat gonderilir'
+    );
     this.send({
       type: 'heartbeat',
       printers_status: printersStatus,
@@ -137,10 +155,16 @@ class WsClient {
       return;
     }
 
-    if (message.type !== 'print_job') return;
+    if (message.type !== 'print_job') {
+      logger.debug({ type: message.type }, 'WebSocket: print_job olmayan mesaj ignore edildi');
+      return;
+    }
 
     const { job_id: jobId, payload } = message;
-    logger.info({ jobId, meta: payload?.meta }, 'received print job');
+    logger.info(
+      { jobId, target: payload?.target, meta: payload?.meta },
+      'WebSocket: cap job alindi'
+    );
 
     try {
       const result = await executePrint({
@@ -148,6 +172,7 @@ class WsClient {
         target: payload.target || { type: 'main' },
       });
 
+      logger.info({ jobId, printer: result.printer, durationMs: result.durationMs }, 'WebSocket: cap ugurlu');
       this.send({
         type: 'print_result',
         job_id: jobId,
@@ -159,6 +184,7 @@ class WsClient {
       });
     } catch (err) {
       const error = formatPrintError(err);
+      logger.error({ jobId, error: error.error }, 'WebSocket: cap ugursuz');
       this.send({
         type: 'print_result',
         job_id: jobId,

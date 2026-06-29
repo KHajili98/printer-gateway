@@ -6,7 +6,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const { config, resolveTarget } = require('../config');
 const { authMiddleware } = require('../middleware/auth');
-const { logger, logPrintRequest } = require('../middleware/logger');
+const { logger, logPrintRequest, logHttpRequest } = require('../middleware/logger');
 const { isPrinterReachable } = require('../printer/tcp-sender');
 const { scanSubnet } = require('../printer/scanner');
 const {
@@ -48,6 +48,7 @@ function storeIdempotency(requestId, response) {
 function createHttpServer(options = {}) {
   const app = express();
   app.set('trust proxy', true);
+  app.use(logHttpRequest);
   app.use(express.json({ limit: '1mb' }));
 
   const publicDir = path.join(getAppRoot(), 'public');
@@ -73,6 +74,7 @@ function createHttpServer(options = {}) {
   });
 
   app.get('/api/v1/health', async (_req, res) => {
+    logger.debug('health check sorğusu');
     const { main, workers = [] } = config.printers;
 
     const mainReachable = main?.ip
@@ -88,6 +90,14 @@ function createHttpServer(options = {}) {
       }))
     );
 
+    logger.info(
+      {
+        main: main?.ip ? { ip: main.ip, reachable: mainReachable } : null,
+        workers: workerStatuses.map((w) => ({ ip: w.ip, reachable: w.reachable })),
+      },
+      `health: main=${mainReachable ? 'online' : 'offline'}`
+    );
+
     res.json({
       status: 'ok',
       uptimeSec: Math.floor((Date.now() - startTime) / 1000),
@@ -101,6 +111,10 @@ function createHttpServer(options = {}) {
   });
 
   app.get('/api/v1/printers/scan', authMiddleware, async (_req, res) => {
+    logger.info(
+      { subnet: config.scanSubnet, port: config.scanPort },
+      'API scan baslayir'
+    );
     try {
       const result = await scanSubnet(config.scanSubnet, config.scanPort);
       res.json(result);

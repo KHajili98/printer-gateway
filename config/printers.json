@@ -1,11 +1,8 @@
 {
   "main": {
     "name": "Kassa printer",
-    "ip": "192.168.1.50",
+    "ip": "192.168.1.80",
     "port": 9100
   },
-  "workers": [
-    { "name": "Mətbəx", "ip": "192.168.1.51", "port": 9100 },
-    { "name": "Bar", "ip": "192.168.1.52", "port": 9100 }
-  ]
+  "workers": []
 }

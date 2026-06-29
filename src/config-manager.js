@@ -111,16 +111,27 @@ function generateApiKey() {
 
 function detectLocalSubnet() {
   const nets = os.networkInterfaces();
+  const { logger } = require('./middleware/logger');
+  const found = [];
+
   for (const name of Object.keys(nets)) {
     for (const net of nets[name] || []) {
       if (net.family === 'IPv4' && !net.internal) {
         const parts = net.address.split('.');
         if (parts.length === 4) {
-          return `${parts[0]}.${parts[1]}.${parts[2]}.`;
+          const subnet = `${parts[0]}.${parts[1]}.${parts[2]}.`;
+          found.push({ interface: name, ip: net.address, subnet });
         }
       }
     }
   }
+
+  if (found.length > 0) {
+    logger.debug({ networks: found }, 'lokal subnet avtomatik tapildi');
+    return found[0].subnet;
+  }
+
+  logger.warn('lokal subnet tapilmadi, default 192.168.1. istifade olunur');
   return '192.168.1.';
 }
 
